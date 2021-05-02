@@ -18,7 +18,7 @@ class GameSpace extends GameObject {
     if (typeof bool !== "boolean") {
       throw new Error("Must pass a boolean")
     }
-    this._on = bool
+    this._visible = bool
   }
 
   get visible() {
@@ -30,8 +30,8 @@ class GameSpace extends GameObject {
    * @returns {Object} created random GameSpace
    */
   static createRandomGameSpace() {
-    const key = Math.floor(Math.random() * 6)
-    return new Space(key)
+    const key = Math.floor(Math.random() * 9)
+    return new GameSpace(key)
   }
 }
 

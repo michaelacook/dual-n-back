@@ -12,7 +12,7 @@ class GameSoundCollection extends GameCollection {
    */
   static createGameSoundCollection() {
     const collection = []
-    while (collection.length <= 9) {
+    while (collection.length <= 23) {
       collection.push(GameSound.createRandomGameSound())
     }
     return new GameSoundCollection(collection)

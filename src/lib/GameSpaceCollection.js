@@ -12,7 +12,7 @@ class GameSpaceCollection extends GameCollection {
    */
   static createGameSpaceCollection() {
     const collection = []
-    while (collection.length <= 9) {
+    while (collection.length <= 23) {
       collection.push(GameSpace.createRandomGameSpace())
     }
     return new GameSpaceCollection(collection)

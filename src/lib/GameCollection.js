@@ -14,7 +14,7 @@ class GameCollection {
    */
   matches(nback) {
     let matches = 0
-    for (let i = nback; i < this._collection; i++) {
+    for (let i = nback; i < this._collection.length; i++) {
       const cur = this._collection[i]
       if (cur.matchAsserted) {
         const prev = this._collection[i - nback]
@@ -33,7 +33,7 @@ class GameCollection {
    */
   possibleMatches(nback) {
     let possible = 0
-    for (let i = nback; i < this._collection; i++) {
+    for (let i = nback; i < this._collection.length; i++) {
       const cur = this._collection[i]
       const prev = this._collection[i - nback]
       if (cur.key === prev.key) {
@@ -49,7 +49,7 @@ class GameCollection {
    */
   missedMatches(nback) {
     let missed = 0
-    for (let i = nback; i <= this._collection; i++) {
+    for (let i = nback; i < this._collection.length; i++) {
       const cur = this._collection[i]
       if (!cur.matchAsserted) {
         const prev = this._collection[i - nback]

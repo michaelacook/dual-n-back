@@ -1,3 +1,12 @@
+import A from "../audio/A.wav"
+import B from "../audio/B.wav"
+import C from "../audio/C.wav"
+import D from "../audio/D.wav"
+import E from "../audio/E.wav"
+import F from "../audio/F.wav"
+import G from "../audio/G.wav"
+import H from "../audio/H.wav"
+import I from "../audio/I.wav"
 import GameObject from "./GameObject"
 
 class GameSound extends GameObject {
@@ -19,20 +28,20 @@ class GameSound extends GameObject {
    */
   static createRandomGameSound() {
     const files = [
-      { path: "../audio/A.wav", key: "A" },
-      { path: "../audio/B.wav", key: "B" },
-      { path: "../audio/C.wav", key: "C" },
-      { path: "../audio/D.wav", key: "D" },
-      { path: "../audio/E.wav", key: "E" },
-      { path: "../audio/F.wav", key: "F" },
-      { path: "../audio/G.wav", key: "G" },
-      { path: "../audio/H.wav", key: "H" },
-      { path: "../audio/I.wav", key: "I" },
+      { sound: A, key: "A" },
+      { sound: B, key: "B" },
+      { sound: C, key: "C" },
+      { sound: D, key: "D" },
+      { sound: E, key: "E" },
+      { sound: F, key: "F" },
+      { sound: G, key: "G" },
+      { sound: H, key: "H" },
+      { sound: I, key: "I" },
     ]
 
     const file = files[Math.floor(Math.random() * 9)]
 
-    return new GameSound(file.path, file.key)
+    return new GameSound(file.sound, file.key)
   }
 }
 
