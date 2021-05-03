@@ -7,7 +7,7 @@ export default [
   {
     key: 1,
     text: "2 Back",
-    value: 3,
+    value: 2,
   },
   {
     key: 2,

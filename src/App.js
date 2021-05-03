@@ -52,6 +52,14 @@ class App extends Component {
     }
   }
 
+  updateNBack = (e, data) => {
+    const game = this.state.game
+    game.nBack = data.value
+    this.setState({
+      game: game,
+    })
+  }
+
   componentDidMount() {
     document.addEventListener("keydown", this.start)
   }
@@ -231,7 +239,8 @@ class App extends Component {
               simple
               placeholder="N Back"
               options={nBackDropDownOptions}
-              value={this.state.game.nBack + 1}
+              value={this.state.game.nBack}
+              onChange={this.updateNBack}
             />
           </Grid.Column>
         </Grid>
