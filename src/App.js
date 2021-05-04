@@ -433,6 +433,7 @@ class App extends Component {
               color="green"
               percent={this.state.trialProgress}
               style={{ marginTop: "25px" }}
+              content={`${this.state.trialProgress}%`}
             />
           </Grid.Column>
           <Grid.Column
