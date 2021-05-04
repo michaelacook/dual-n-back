@@ -430,6 +430,7 @@ class App extends Component {
               </Grid.Column>
             </Grid>
             <Progress
+              size="large"
               color="green"
               percent={this.state.trialProgress}
               style={{ marginTop: "25px" }}
