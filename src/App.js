@@ -243,7 +243,7 @@ class App extends Component {
     }
   }
 
-  assertSpaceMatch = () => {
+  assertVisualMatch = () => {
     if (this.state.active) {
       const currentGameSpaces = this.state.currentGameSpaces
       currentGameSpaces[currentGameSpaces.length - 1].matchAsserted = true
@@ -253,7 +253,7 @@ class App extends Component {
     }
   }
 
-  assertSoundMatch = () => {
+  assertAudioMatch = () => {
     if (this.state.active) {
       const currentGameSounds = this.state.currentGameSounds
       currentGameSounds[currentGameSounds.length - 1].matchAsserted = true
@@ -393,7 +393,7 @@ class App extends Component {
               <Grid.Column>
                 <Button
                   textAlign="center"
-                  onClick={this.assertSoundMatch}
+                  onClick={this.assertAudioMatch}
                   fluid
                   size="big"
                 >
@@ -404,8 +404,8 @@ class App extends Component {
                 <Button
                   textAlign="center"
                   onClick={() => {
-                    this.assertSoundMatch()
-                    this.assertSpaceMatch()
+                    this.assertAudioMatch()
+                    this.assertVisualMatch()
                   }}
                   fluid
                   size="big"
@@ -416,7 +416,7 @@ class App extends Component {
               <Grid.Column>
                 <Button
                   textAlign="center"
-                  onClick={this.assertSpaceMatch}
+                  onClick={this.assertVisualMatch}
                   fluid
                   size="big"
                 >
@@ -433,7 +433,7 @@ class App extends Component {
             />
           </Grid.Column>
           <Grid.Column
-            width={3}
+            width={4}
             style={{
               marginTop: "27px",
               backgroundColor: "#E5E5E5",
@@ -458,11 +458,17 @@ class App extends Component {
             />
             <Divider />
             <p>Options</p>
-            <Checkbox label="Dual n-back" checked radio />
             <Checkbox
-              label="N-back (no sound)"
+              label="Dual n-back"
+              style={{ marginRight: "3px" }}
+              checked
               radio
-              style={{ marginTop: "5px" }}
+            />
+            <Checkbox label="N-back (no sound)" radio />
+            <Checkbox
+              label="Auto-update n-back"
+              toggle
+              style={{ marginTop: "15px" }}
             />
             <Checkbox
               label="Save history"
