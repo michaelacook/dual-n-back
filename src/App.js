@@ -1,6 +1,7 @@
 import React, { Component } from "react"
 import {
   Button,
+  Checkbox,
   Container,
   Divider,
   Dropdown,
@@ -12,14 +13,14 @@ import GameSpaceCollection from "./lib/GameSpaceCollection"
 import GameSoundCollection from "./lib/GameSoundCollection"
 import GameSpace from "./lib/GameSpace"
 import GameSound from "./lib/GameSound"
-import Game from "./lib/Game"
 import nBackDropDownOptions from "./nBackDropDownOptions"
 
 class App extends Component {
   constructor(props) {
     super(props)
     this.state = {
-      game: new Game(2),
+      active: false,
+      nBack: 2,
       iteration: -1,
       level: 0,
       trials: 20,
@@ -53,28 +54,22 @@ class App extends Component {
   }
 
   incrementNBack = () => {
-    const game = this.state.game
-    game.nBack = game.nBack + 1
-    this.setState({
-      game: game,
-    })
+    this.setState((prevState) => ({
+      nBack: prevState.nBack + 1
+    }))
   }
 
   decrementNBack = () => {
-    const game = this.state.game
-    if (game.nBack > 1) {
-      game.nBack = game.nBack - 1
-      this.setState({
-        game: game,
-      })
+    if (this.state.nBack > 1) {
+      this.setState((prevState) => ({
+        nBack: prevState.nBack - 1
+      }))
     }
   }
 
   updateNBack = (e, data) => {
-    const game = this.state.game
-    game.nBack = data.value
     this.setState({
-      game: game,
+      nBack: data.value,
     })
   }
 
@@ -105,15 +100,13 @@ class App extends Component {
   completeGameTrial() {
     setTimeout(() => {
       console.log("Trial complete")
-      const game = this.state.game
-      game.active = false
       const currentGameSpaces = this.state.currentGameSpaces
       const currentGameSounds = this.state.currentGameSounds
       const gameSpaceTrialHistory = this.state.gameSpaceTrialHistory
       const gameSoundTrialHistory = this.state.gameSoundTrialHistory
       this.setState(
         {
-          game: game,
+          active: false,
           gameSpaceTrialHistory: [
             ...gameSpaceTrialHistory,
             new GameSpaceCollection(currentGameSpaces),
@@ -135,7 +128,7 @@ class App extends Component {
    * Increment or decrement nBack based on calculated scores
    */
   calculateCurrentScores = () => {
-    const nBack = this.state.game.nBack
+    const nBack = this.state.nBack
     const spaceCollection = [...this.state.gameSpaceTrialHistory].pop()
     const soundCollection = [...this.state.gameSoundTrialHistory].pop()
 
@@ -163,7 +156,7 @@ class App extends Component {
       this.incrementNBack()
     }
 
-    if (visualScore < 40 && audioScore < 40 && this.state.game.nBack > 2) {
+    if (visualScore < 40 && audioScore < 40 && this.state.nBack > 2) {
       this.decrementNBack()
     }
   }
@@ -229,11 +222,9 @@ class App extends Component {
    */
   start = (e) => {
     if (e.key === " " || e.key === 32) {
-      const game = this.state.game
-      game.active = true
       this.setState(
         {
-          game: game,
+          active: true,
           iteration: -1,
           currentVisualScore: 0,
           currentAudioScore: 0,
@@ -458,9 +449,14 @@ class App extends Component {
               simple
               placeholder="N Back"
               options={nBackDropDownOptions}
-              value={this.state.game.nBack}
+              value={this.state.nBack}
               onChange={this.updateNBack}
             />
+            <Divider />
+            <p>Options</p>
+            <Checkbox label="Dual n-back" checked radio />
+            <Checkbox label="N-back (no sound)" radio style={{ marginTop: "5px" }} />
+            <Checkbox label="Save history" toggle style={{ marginTop: "15px" }} />
           </Grid.Column>
         </Grid>
       </Container>
