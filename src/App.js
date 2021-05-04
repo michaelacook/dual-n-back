@@ -55,14 +55,14 @@ class App extends Component {
 
   incrementNBack = () => {
     this.setState((prevState) => ({
-      nBack: prevState.nBack + 1
+      nBack: prevState.nBack + 1,
     }))
   }
 
   decrementNBack = () => {
     if (this.state.nBack > 1) {
       this.setState((prevState) => ({
-        nBack: prevState.nBack - 1
+        nBack: prevState.nBack - 1,
       }))
     }
   }
@@ -244,19 +244,23 @@ class App extends Component {
   }
 
   assertSpaceMatch = () => {
-    const currentGameSpaces = this.state.currentGameSpaces
-    currentGameSpaces[currentGameSpaces.length - 1].matchAsserted = true
-    this.setState({
-      currentGameSpaces: currentGameSpaces,
-    })
+    if (this.state.active) {
+      const currentGameSpaces = this.state.currentGameSpaces
+      currentGameSpaces[currentGameSpaces.length - 1].matchAsserted = true
+      this.setState({
+        currentGameSpaces: currentGameSpaces,
+      })
+    }
   }
 
   assertSoundMatch = () => {
-    const currentGameSounds = this.state.currentGameSounds
-    currentGameSounds[currentGameSounds.length - 1].matchAsserted = true
-    this.setState({
-      currentGameSounds: currentGameSounds,
-    })
+    if (this.state.active) {
+      const currentGameSounds = this.state.currentGameSounds
+      currentGameSounds[currentGameSounds.length - 1].matchAsserted = true
+      this.setState({
+        currentGameSounds: currentGameSounds,
+      })
+    }
   }
 
   render() {
@@ -455,8 +459,16 @@ class App extends Component {
             <Divider />
             <p>Options</p>
             <Checkbox label="Dual n-back" checked radio />
-            <Checkbox label="N-back (no sound)" radio style={{ marginTop: "5px" }} />
-            <Checkbox label="Save history" toggle style={{ marginTop: "15px" }} />
+            <Checkbox
+              label="N-back (no sound)"
+              radio
+              style={{ marginTop: "5px" }}
+            />
+            <Checkbox
+              label="Save history"
+              toggle
+              style={{ marginTop: "15px" }}
+            />
           </Grid.Column>
         </Grid>
       </Container>
