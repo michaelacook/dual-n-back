@@ -14,25 +14,36 @@ import GameSoundCollection from "./lib/GameSoundCollection"
 import GameSpace from "./lib/GameSpace"
 import GameSound from "./lib/GameSound"
 import nBackDropDownOptions from "./nBackDropDownOptions"
+import Cookies from "js-cookie"
 
 class App extends Component {
   constructor(props) {
     super(props)
     this.state = {
       active: false,
-      nBack: 2,
+      nBack: Cookies.get("nBack") || 2,
       iteration: -1,
-      level: 0,
-      trials: 20,
+      level: Cookies.get("level") || 0,
+      trials: Cookies.get("trials") || 20,
       currentVisualScore: 0,
       currentAudioScore: 0,
       currentMissedVisualMatches: 0,
       currentMissedAudioMatches: 0,
       currentGameSpaces: [],
       currentGameSounds: [],
-      gameSpaceTrialHistory: [],
-      gameSoundTrialHistory: [],
+      gameSpaceTrialHistory: Cookies.get("gameSpaceTrials")
+        ? JSON.parse(Cookies.get("gameSpaceTrials"))
+        : [],
+      gameSoundTrialHistory: Cookies.get("gameSoundTrials")
+        ? JSON.parse(Cookies.get("gameSoundTrials"))
+        : [],
       trialProgress: 0,
+      options: Cookies.get("options")
+        ? JSON.parse(Cookies.get("options"))
+        : {
+            autoUpdateNBack: true,
+            saveHistory: false,
+          },
       0: null,
       1: null,
       2: null,
@@ -51,6 +62,48 @@ class App extends Component {
 
   componentWillUnmount() {
     document.removeEventListener("keydown", this.start)
+  }
+
+  saveOptions = () => {
+    Cookies.set("options", JSON.stringify(this.state.options), { expires: 365 })
+  }
+
+  saveLevel = () => {
+    Cookies.set("level", this.state.level)
+  }
+
+  saveTrials = () => {
+    Cookies.set("trials", this.state.trials)
+  }
+
+  saveNBack = () => {
+    Cookies.set("nBack", this.state.nBack)
+  }
+
+  saveGameSpaceTrialHistory = () => {
+    Cookies.set(
+      "gameSpaceTrials",
+      JSON.stringify(this.state.gameSpaceTrialHistory)
+    )
+  }
+
+  saveHistory = () => {
+    const { gameSpaceTrialHistory, gameSoundTrialHistory } = this.state
+    Cookies.set(
+      "history",
+      {
+        gameSpaceTrialHistory,
+        gameSoundTrialHistory,
+      },
+      { expires: 365 }
+    )
+  }
+
+  saveGameSoundTrialHistory = () => {
+    Cookies.set(
+      "gameSoundTrials",
+      JSON.stringify(this.state.gameSoundTrialHistory)
+    )
   }
 
   incrementNBack = () => {
@@ -94,33 +147,87 @@ class App extends Component {
   }
 
   /**
-   * On completion of game trial create instances of GameSpaceCollection and GameSoundCollection
-   * For calculation of scores
+   * Set game state to active, start the game trial
+   * @param {Object} e - SyntheticEvent
    */
-  completeGameTrial() {
+  start = (e) => {
+    if (!this.state.active) {
+      if (e.key === " " || e.key === 32) {
+        this.setState(
+          {
+            active: true,
+            iteration: -1,
+            currentVisualScore: 0,
+            currentAudioScore: 0,
+            currentMissedVisualMatches: 0,
+            currentMissedAudioMatches: 0,
+            currentGameSpaces: [],
+            currentGameSounds: [],
+            trialProgress: 0,
+          },
+          () => {
+            this.incrementLevel()
+            this.decrementTrials()
+            this.runGameTrial()
+          }
+        )
+      }
+    }
+  }
+
+  /**
+   * Run a series of 24 game trials
+   * Each iteration updates the iteration state and increments the progress bar
+   */
+  runGameTrial = () => {
+    const id = setInterval(() => {
+      this.setState(
+        (prevState) => ({
+          iteration: prevState.iteration + 1,
+        }),
+        this.runTrialIteration
+      )
+      if (this.state.iteration === 24) {
+        clearInterval(id)
+        this.completeGameTrial()
+      }
+    }, 3000)
+  }
+
+  /**
+   * Run a single trial iteration
+   * Makes a random space visible and plays a random game sound, then adds both to a collection
+   * One game iteration actually consists of a space iteration and a sound iteration
+   * A space becomes visible for 1 second, and a sound is played
+   */
+  runTrialIteration = () => {
+    const space = GameSpace.createRandomGameSpace()
+    const sound = GameSound.createRandomGameSound()
+    const key = space.key
+    const currentGameSpaces = this.state.currentGameSpaces
+    const currentGameSounds = this.state.currentGameSounds
+    currentGameSounds.push(sound)
+    currentGameSpaces.push(space)
+    this.setState(
+      {
+        [key]: true,
+        currentGameSpaces: currentGameSpaces,
+        currentGameSounds: currentGameSounds,
+      },
+      () => {
+        sound.play()
+      }
+    )
     setTimeout(() => {
-      console.log("Trial complete")
-      const currentGameSpaces = this.state.currentGameSpaces
-      const currentGameSounds = this.state.currentGameSounds
-      const gameSpaceTrialHistory = this.state.gameSpaceTrialHistory
-      const gameSoundTrialHistory = this.state.gameSoundTrialHistory
       this.setState(
         {
-          active: false,
-          gameSpaceTrialHistory: [
-            ...gameSpaceTrialHistory,
-            new GameSpaceCollection(currentGameSpaces),
-          ],
-          gameSoundTrialHistory: [
-            ...gameSoundTrialHistory,
-            new GameSoundCollection(currentGameSounds),
-          ],
+          [key]: null,
         },
         () => {
-          this.calculateCurrentScores()
+          this.incrementProgressBar()
         }
       )
-    }, 3000)
+    }, 1200)
   }
 
   /**
@@ -152,95 +259,51 @@ class App extends Component {
       currentMissedAudioMatches: missedAudioMatches,
     })
 
-    if (visualScore >= 70 && audioScore >= 70) {
-      this.incrementNBack()
-    }
+    if (this.state.options.autoUpdateNBack) {
+      if (visualScore >= 70 && audioScore >= 70) {
+        this.incrementNBack()
+      }
 
-    if (visualScore < 40 && audioScore < 40 && this.state.nBack > 2) {
-      this.decrementNBack()
+      if (visualScore < 40 && audioScore < 40 && this.state.nBack > 2) {
+        this.decrementNBack()
+      }
     }
   }
 
   /**
-   * Run a single trial iteration
-   * Makes a random space visible and plays a random game sound, then adds both to a collection
-   * One game iteration actually consists of a space iteration and a sound iteration
-   * A space becomes visible for 1 second, and a sound is played
+   * On completion of game trial create instances of GameSpaceCollection and GameSoundCollection
+   * For calculation of scores
    */
-  runTrialIteration = () => {
-    const space = GameSpace.createRandomGameSpace()
-    const sound = GameSound.createRandomGameSound()
-    const key = space.key
-    const currentGameSpaces = this.state.currentGameSpaces
-    const currentGameSounds = this.state.currentGameSounds
-    currentGameSounds.push(sound)
-    currentGameSpaces.push(space)
-    this.setState(
-      {
-        [key]: space,
-        currentGameSpaces: currentGameSpaces,
-        currentGameSounds: currentGameSounds,
-      },
-      () => {
-        sound.play()
-      }
-    )
+  completeGameTrial() {
     setTimeout(() => {
+      console.log("Trial complete")
+      const currentGameSpaces = this.state.currentGameSpaces
+      const currentGameSounds = this.state.currentGameSounds
+      const gameSpaceTrialHistory = this.state.gameSpaceTrialHistory
+      const gameSoundTrialHistory = this.state.gameSoundTrialHistory
       this.setState(
         {
-          [key]: null,
+          active: false,
+          gameSpaceTrialHistory: [
+            ...gameSpaceTrialHistory,
+            new GameSpaceCollection(currentGameSpaces),
+          ],
+          gameSoundTrialHistory: [
+            ...gameSoundTrialHistory,
+            new GameSoundCollection(currentGameSounds),
+          ],
         },
         () => {
-          this.incrementProgressBar()
+          this.calculateCurrentScores()
+          this.saveLevel()
+          this.saveTrials()
+          this.saveNBack()
+          if (this.state.options.saveHistory) {
+            this.saveHistory()
+          }
         }
       )
-    }, 1200)
-  }
-
-  /**
-   * Run a series of 24 game trials
-   * Each iteration updates the iteration state and increments the progress bar
-   */
-  runGameTrial = () => {
-    const id = setInterval(() => {
-      this.setState(
-        (prevState) => ({
-          iteration: prevState.iteration + 1,
-        }),
-        this.runTrialIteration
-      )
-      if (this.state.iteration === 24) {
-        clearInterval(id)
-        this.completeGameTrial()
-      }
     }, 3000)
-  }
-
-  /**
-   * Set game state to active, start the game trial
-   * @param {Object} e - SyntheticEvent
-   */
-  start = (e) => {
-    if (e.key === " " || e.key === 32) {
-      this.setState(
-        {
-          active: true,
-          iteration: -1,
-          currentVisualScore: 0,
-          currentAudioScore: 0,
-          currentMissedVisualMatches: 0,
-          currentMissedAudioMatches: 0,
-          currentGameSpaces: [],
-          currentGameSounds: [],
-          trialProgress: 0,
-        },
-        () => {
-          this.incrementLevel()
-          this.decrementTrials()
-          this.runGameTrial()
-        }
-      )
-    }
   }
 
   assertVisualMatch = () => {
@@ -466,14 +529,37 @@ class App extends Component {
             />
             <Checkbox label="N-back (no sound)" radio />
             <Checkbox
+              key={this.state.options}
               label="Auto-update n-back"
               toggle
               style={{ marginTop: "15px" }}
+              checked={this.state.options.autoUpdateNBack}
+              onChange={(e) => {
+                const { options } = this.state
+                options.autoUpdateNBack = !options.autoUpdateNBack
+                this.setState(
+                  {
+                    options: options,
+                  },
+                  this.saveOptions
+                )
+              }}
             />
             <Checkbox
               label="Save history"
               toggle
               style={{ marginTop: "15px" }}
+              checked={this.state.options.saveHistory}
+              onChange={(e) => {
+                const { options } = this.state
+                options.saveHistory = !options.saveHistory
+                this.setState(
+                  {
+                    options: options,
+                  },
+                  this.saveOptions
+                )
+              }}
             />
           </Grid.Column>
         </Grid>
