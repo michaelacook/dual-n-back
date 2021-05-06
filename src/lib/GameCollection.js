@@ -60,6 +60,25 @@ class GameCollection {
     }
     return missed
   }
+
+  /**
+   * Calculate wrongly asserted matches
+   * @param {Number} nBack - number back from current game iteration to check for false matches
+   * @returns {Number}
+   */
+  falseMatches(nBack) {
+    let _false = 0
+    for (let i = nback; i < this._collection.length; i++) {
+      const cur = this._collection[i]
+      if (cur.matchAsserted) {
+        const prev = this._collection[i - nback]
+        if (prev.key !== cur.key) {
+          _false += 1
+        }
+      }
+    }
+    return _false
+  }
 }
 
 export default GameCollection

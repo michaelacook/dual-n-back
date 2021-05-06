@@ -15,16 +15,20 @@ import GameSpace from "./lib/GameSpace"
 import GameSound from "./lib/GameSound"
 import nBackDropDownOptions from "./nBackDropDownOptions"
 import Cookies from "js-cookie"
+import ControlsModal from "./components/ControlsModal"
+import SessionStatsModal from "./components/SessionStatsModal"
 
 class App extends Component {
   constructor(props) {
     super(props)
     this.state = {
+      showControlsDimmer: true,
+      showSessionStats: true,
       active: false,
-      nBack: Cookies.get("nBack") || 2,
+      nBack: Number(Cookies.get("nBack")) || 2,
       iteration: -1,
-      level: Cookies.get("level") || 0,
-      trials: Cookies.get("trials") || 20,
+      level: Number(Cookies.get("level")) || 0,
+      trials: Number(Cookies.get("trials")) || 20,
       currentVisualScore: 0,
       currentAudioScore: 0,
       currentMissedVisualMatches: 0,
@@ -58,10 +62,12 @@ class App extends Component {
 
   componentDidMount() {
     document.addEventListener("keydown", this.start)
+    document.addEventListener("keydown", this.stop)
   }
 
   componentWillUnmount() {
     document.removeEventListener("keydown", this.start)
+    document.removeEventListener("keydown", this.stop)
   }
 
   saveOptions = () => {
@@ -176,6 +182,20 @@ class App extends Component {
   }
 
   /**
+   * Set active state to false to prevent next game trail iteration
+   * @param {Object} e - SyntheticEvent
+   */
+  stop = (e) => {
+    if (this.state.active) {
+      if (e.key === "Escape" || e.key === 27) {
+        this.setState({
+          active: false,
+        })
+      }
+    }
+  }
+
+  /**
    * Run a series of 24 game trials
    * Each iteration updates the iteration state and increments the progress bar
    */
@@ -187,7 +207,7 @@ class App extends Component {
         }),
         this.runTrialIteration
       )
-      if (this.state.iteration === 24) {
+      if (this.state.iteration === 24 || !this.state.active) {
         clearInterval(id)
         this.completeGameTrial()
       }
@@ -326,9 +346,29 @@ class App extends Component {
     }
   }
 
+  openSessionStats = () => {
+    this.setState({
+      showSessionStats: true,
+    })
+  }
+
+  closeSessionStats = () => {
+    this.setState({
+      showSessionStats: false,
+    })
+  }
+
+  calculateSessionStats = () => {
+    // calculate average visual and audio scores
+  }
+
   render() {
     return (
       <Container>
+        <SessionStatsModal
+          closeSessionStats={this.closeSessionStats}
+          open={this.state.showSessionStats}
+        />
         <span>
           <img src="logo.png" alt="logo"></img>
           <Header
@@ -377,8 +417,16 @@ class App extends Component {
               </span>
             </p>
             <Divider />
-            <p>What Is Dual N-Back?</p>
-            <p>How To Play</p>
+            <ControlsModal />
+            <p>
+              <a
+                style={{ textDecoration: "underline" }}
+                target="_blank"
+                href="https://en.wikipedia.org/wiki/N-back"
+              >
+                What Is Dual N-Back?
+              </a>
+            </p>
           </Grid.Column>
           <Grid.Column width={9}>
             <Grid id="grid" columns="3" celled style={{ borderRadius: "3px" }}>
