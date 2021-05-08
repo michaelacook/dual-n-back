@@ -1,0 +1,1 @@
+{"version":3,"sources":["webpack://src/custom.css"],"names":[],"mappings":"AAAA,KACE,aACF,CAEA,eACE,4BAA8B,CAC9B,iBACF","file":"main.e085eccd.chunk.css","sourcesContent":["body {\n  overflow: auto;\n}\n\n.visible-space {\n  background: #509bfe !important;\n  border-radius: 3px;\n}\n"]}
