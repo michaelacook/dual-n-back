@@ -17,6 +17,7 @@ import nBackDropDownOptions from "./nBackDropDownOptions"
 import Cookies from "js-cookie"
 import ControlsModal from "./components/ControlsModal"
 import SessionStatsModal from "./components/SessionStatsModal"
+import LeftPanel from "./components/LeftPanel"
 
 class App extends Component {
   constructor(props) {
@@ -451,55 +452,14 @@ class App extends Component {
               padding: "28px",
             }}
           >
-            <p>
-              Visual Score:{" "}
-              <span style={{ fontWeight: "bold" }}>
-                {this.state.currentVisualScore}
-              </span>
-            </p>
-            <p>
-              Audio Score:{" "}
-              <span style={{ fontWeight: "bold" }}>
-                {this.state.currentAudioScore}
-              </span>
-            </p>
-            <p>
-              Wrong Visual:{" "}
-              <span style={{ fontWeight: "bold" }}>
-                {this.state.currentWrongVisualMatches}
-              </span>
-            </p>
-            <p>
-              Missed Visual:{" "}
-              <span style={{ fontWeight: "bold" }}>
-                {this.state.currentMissedVisualMatches}
-              </span>
-            </p>
-            <p>
-              Wrong Audio:{" "}
-              <span style={{ fontWeight: "bold" }}>
-                {this.state.currentWrongAudioMatches}
-              </span>
-            </p>
-            <p>
-              Missed Audio:{" "}
-              <span style={{ fontWeight: "bold" }}>
-                {this.state.currentMissedAudioMatches}
-              </span>
-            </p>
-            <Divider />
-            <ControlsModal />
-            <p>
-              <a
-                style={{ textDecoration: "underline" }}
-                target="_blank"
-                rel="noreferrer"
-                href="https://en.wikipedia.org/wiki/N-back"
-              >
-                What Is Dual N-Back
-              </a>
-              <Icon name="question circle" />
-            </p>
+            <LeftPanel
+              currentVisualScore={this.state.currentVisualScore}
+              currentAudioScore={this.state.currentAudioScore}
+              currentWrongVisualMatches={this.state.currentWrongVisualMatches}
+              currentWrongAudioMatches={this.state.currentWrongAudioMatches}
+              currentMissedAudioMatches={this.state.currentMissedAudioMatches}
+              currentMissedVisualMatches={this.state.currentMissedVisualMatches}
+            />
           </Grid.Column>
           <Grid.Column width={8}>
             <Grid columns="3" celled style={{ borderRadius: "3px" }}>
