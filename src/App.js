@@ -1,23 +1,14 @@
 import React, { Component } from "react"
-import {
-  Button,
-  Checkbox,
-  Container,
-  Divider,
-  Dropdown,
-  Grid,
-  Header,
-  Icon,
-  Progress,
-} from "semantic-ui-react"
+import { Container, Grid, Header, Progress } from "semantic-ui-react"
+import Cookies from "js-cookie"
 import GameObjectCollection from "./lib/GameObjectCollection"
 import GameSpace from "./lib/GameSpace"
 import GameSound from "./lib/GameSound"
-import nBackDropDownOptions from "./nBackDropDownOptions"
-import Cookies from "js-cookie"
-import ControlsModal from "./components/ControlsModal"
 import SessionStatsModal from "./components/SessionStatsModal"
 import LeftPanel from "./components/LeftPanel"
+import GameGrid from "./components/GameGrid"
+import Controls from "./components/Controls"
+import RightPanel from "./components/RightPanel"
 
 class App extends Component {
   constructor(props) {
@@ -70,6 +61,28 @@ class App extends Component {
 
   saveOptions = () => {
     Cookies.set("options", JSON.stringify(this.state.options), { expires: 365 })
+  }
+
+  /**
+   * Switch value of this.state.options.saveHistory
+   */
+  toggleSaveHistory = () => {
+    const { options } = this.state
+    options.saveHistory = !options.saveHistory
+    this.setState({
+      options,
+    })
+  }
+
+  /**
+   * Switch value of this.state.options.autoUpdateNBack
+   */
+  toggleAutoUpdateNBack = () => {
+    const { options } = this.state
+    options.autoUpdateNBack = !options.autoUpdateNBack
+    this.setState({
+      options,
+    })
   }
 
   saveLevel = () => {
@@ -462,119 +475,11 @@ class App extends Component {
             />
           </Grid.Column>
           <Grid.Column width={8}>
-            <Grid columns="3" celled style={{ borderRadius: "3px" }}>
-              <Grid.Row style={{ height: "160px" }}>
-                <Grid.Column>
-                  <div
-                    style={{ height: "100%" }}
-                    className={this.state[0] ? "visible-space" : null}
-                    key={0}
-                  ></div>
-                </Grid.Column>
-                <Grid.Column>
-                  <div
-                    style={{ height: "100%" }}
-                    className={this.state[1] ? "visible-space" : null}
-                    key={1}
-                  ></div>
-                </Grid.Column>
-                <Grid.Column>
-                  <div
-                    style={{ height: "100%" }}
-                    className={this.state[2] ? "visible-space" : null}
-                    key={2}
-                  ></div>
-                </Grid.Column>
-              </Grid.Row>
-              <Grid.Row style={{ height: "160px" }}>
-                <Grid.Column>
-                  <div
-                    style={{ height: "100%" }}
-                    className={this.state[3] ? "visible-space" : null}
-                    key={3}
-                  ></div>
-                </Grid.Column>
-                <Grid.Column>
-                  <div
-                    style={{ height: "100%" }}
-                    className={this.state[4] ? "visible-space" : null}
-                    key={4}
-                  ></div>
-                </Grid.Column>
-                <Grid.Column>
-                  <div
-                    style={{ height: "100%" }}
-                    className={this.state[5] ? "visible-space" : null}
-                    key={5}
-                  ></div>
-                </Grid.Column>
-              </Grid.Row>
-              <Grid.Row style={{ height: "160px" }}>
-                <Grid.Column>
-                  <div
-                    style={{ height: "100%" }}
-                    className={this.state[6] ? "visible-space" : null}
-                    key={6}
-                  ></div>
-                </Grid.Column>
-                <Grid.Column>
-                  <div
-                    style={{ height: "100%" }}
-                    className={this.state[7] ? "visible-space" : null}
-                    key={7}
-                  ></div>
-                </Grid.Column>
-                <Grid.Column>
-                  <div
-                    style={{ height: "100%" }}
-                    className={this.state[8] ? "visible-space" : null}
-                    key={8}
-                  ></div>
-                </Grid.Column>
-              </Grid.Row>
-            </Grid>
-            <Grid columns={3} centered>
-              <Grid.Column>
-                <Button
-                  textAlign="center"
-                  onClick={(e) => {
-                    this.assertAudioMatch()
-                    e.target.blur()
-                  }}
-                  fluid
-                  size="big"
-                >
-                  Audio Match
-                </Button>
-              </Grid.Column>
-              <Grid.Column>
-                <Button
-                  textAlign="center"
-                  onClick={(e) => {
-                    this.assertAudioMatch()
-                    this.assertVisualMatch()
-                    e.target.blur()
-                  }}
-                  fluid
-                  size="big"
-                >
-                  Dual
-                </Button>
-              </Grid.Column>
-              <Grid.Column>
-                <Button
-                  textAlign="center"
-                  onClick={(e) => {
-                    this.assertVisualMatch()
-                    e.target.blur()
-                  }}
-                  fluid
-                  size="big"
-                >
-                  Visual Match
-                </Button>
-              </Grid.Column>
-            </Grid>
+            <GameGrid state={this.state} />
+            <Controls
+              assertVisualMatch={this.assertVisualMatch}
+              assertAudioMatch={this.assertAudioMatch}
+            />
             <Progress
               size="large"
               color="green"
@@ -585,7 +490,6 @@ class App extends Component {
           </Grid.Column>
           <Grid.Column
             width={4}
-            mobile={4}
             style={{
               marginTop: "27px",
               backgroundColor: "#E5E5E5",
@@ -593,54 +497,15 @@ class App extends Component {
               padding: "28px",
             }}
           >
-            <p>
-              Level:{" "}
-              <span style={{ fontWeight: "bold" }}>{this.state.level}</span>
-            </p>
-            <p>
-              Number of trails:{" "}
-              <span style={{ fontWeight: "bold" }}>{this.state.trials}</span>
-            </p>
-            <Dropdown
-              simple
-              placeholder="N Back"
-              options={nBackDropDownOptions}
-              value={this.state.nBack}
-              onChange={this.updateNBack}
-            />
-            <Divider />
-            <p>Options</p>
-            <Checkbox
-              key={this.state.options}
-              label="Auto-update n-back"
-              toggle
-              checked={this.state.options.autoUpdateNBack}
-              onChange={(e) => {
-                const { options } = this.state
-                options.autoUpdateNBack = !options.autoUpdateNBack
-                this.setState(
-                  {
-                    options: options,
-                  },
-                  this.saveOptions
-                )
-              }}
-            />
-            <Checkbox
-              label="Save history"
-              toggle
-              style={{ marginTop: "15px" }}
-              checked={this.state.options.saveHistory}
-              onChange={(e) => {
-                const { options } = this.state
-                options.saveHistory = !options.saveHistory
-                this.setState(
-                  {
-                    options: options,
-                  },
-                  this.saveOptions
-                )
-              }}
+            <RightPanel
+              level={this.state.level}
+              trials={this.state.trials}
+              nBack={this.state.nBack}
+              updateNBack={this.updateNBack}
+              options={this.state.options}
+              saveOptions={this.saveOptions}
+              toggleSaveHistory={this.toggleSaveHistory}
+              toggleAutoUpdateNBack={this.toggleAutoUpdateNBack}
             />
           </Grid.Column>
         </Grid>
