@@ -1,4 +1,9 @@
-class GameCollection {
+/*
+The GameObjectCollection provides a set of methods 
+for calculating scores from an array of either GameSounds or GameSpaces 
+*/
+
+class GameObjectCollection {
   constructor(collection = []) {
     this._collection = collection
   }
@@ -81,4 +86,4 @@ class GameCollection {
   }
 }
 
-export default GameCollection
+export default GameObjectCollection

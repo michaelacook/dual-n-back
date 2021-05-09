@@ -7,10 +7,10 @@ import {
   Dropdown,
   Grid,
   Header,
+  Icon,
   Progress,
 } from "semantic-ui-react"
-import GameSpaceCollection from "./lib/GameSpaceCollection"
-import GameSoundCollection from "./lib/GameSoundCollection"
+import GameObjectCollection from "./lib/GameObjectCollection"
 import GameSpace from "./lib/GameSpace"
 import GameSound from "./lib/GameSound"
 import nBackDropDownOptions from "./nBackDropDownOptions"
@@ -33,30 +33,27 @@ class App extends Component {
       currentAudioScore: 0,
       currentMissedVisualMatches: 0,
       currentMissedAudioMatches: 0,
+      currentWrongVisualMatches: 0,
+      currentWrongAudioMatches: 0,
       currentGameSpaces: [],
       currentGameSounds: [],
-      gameSpaceTrialHistory: Cookies.get("gameSpaceTrials")
-        ? JSON.parse(Cookies.get("gameSpaceTrials"))
-        : [],
-      gameSoundTrialHistory: Cookies.get("gameSoundTrials")
-        ? JSON.parse(Cookies.get("gameSoundTrials"))
-        : [],
       trialProgress: 0,
+      sessionScores: [],
       options: Cookies.get("options")
         ? JSON.parse(Cookies.get("options"))
         : {
             autoUpdateNBack: true,
             saveHistory: false,
           },
-      0: null,
-      1: null,
-      2: null,
-      3: null,
-      4: null,
-      5: null,
-      6: null,
-      7: null,
-      8: null,
+      0: false,
+      1: false,
+      2: false,
+      3: false,
+      4: false,
+      5: false,
+      6: false,
+      7: false,
+      8: false,
     }
   }
 
@@ -86,29 +83,17 @@ class App extends Component {
     Cookies.set("nBack", this.state.nBack)
   }
 
-  saveGameSpaceTrialHistory = () => {
-    Cookies.set(
-      "gameSpaceTrials",
-      JSON.stringify(this.state.gameSpaceTrialHistory)
-    )
-  }
-
+  /**
+   * Save session scores and current date to a cookie
+   */
   saveHistory = () => {
-    const { gameSpaceTrialHistory, gameSoundTrialHistory } = this.state
     Cookies.set(
-      "history",
+      "sessionHistory",
       {
-        gameSpaceTrialHistory,
-        gameSoundTrialHistory,
+        scores: this.calculateSessionStats(),
+        date: new Date(),
       },
       { expires: 365 }
-    )
-  }
-
-  saveGameSoundTrialHistory = () => {
-    Cookies.set(
-      "gameSoundTrials",
-      JSON.stringify(this.state.gameSoundTrialHistory)
     )
   }
 
@@ -153,6 +138,25 @@ class App extends Component {
   }
 
   /**
+   * Reset game back to initial state
+   * To be run when user completes game session
+   */
+  resetGame = () => {
+    this.setState(
+      {
+        level: 0,
+        trails: 0,
+        nBack: 2,
+      },
+      () => {
+        this.saveLevel()
+        this.saveTrials()
+        this.saveNBack()
+      }
+    )
+  }
+
+  /**
    * Set game state to active, start the game trial
    * @param {Object} e - SyntheticEvent
    */
@@ -167,6 +171,8 @@ class App extends Component {
             currentAudioScore: 0,
             currentMissedVisualMatches: 0,
             currentMissedAudioMatches: 0,
+            currentWrongAudioMatches: 0,
+            currentWrongVisualMatches: 0,
             currentGameSpaces: [],
             currentGameSounds: [],
             trialProgress: 0,
@@ -241,7 +247,7 @@ class App extends Component {
     setTimeout(() => {
       this.setState(
         {
-          [key]: null,
+          [key]: false,
         },
         () => {
           this.incrementProgressBar()
@@ -251,32 +257,63 @@ class App extends Component {
   }
 
   /**
+   * Save current trial scores to state
+   * @param {Number} nBack
+   * @param {Number} visualScore
+   * @param {Number} audioScore
+   */
+  addSessionScore = (nBack, visualScore, audioScore) => {
+    this.setState((prevState) => ({
+      sessionScores: [
+        ...prevState.sessionScores,
+        { nBack, visualScore, audioScore },
+      ],
+    }))
+  }
+
+  /**
    * Calculate visual and audio scores from most recent game trial and set to state
    * Increment or decrement nBack based on calculated scores
+   * Each wrongly asserted match results in a 5% reduction in score
    */
   calculateCurrentScores = () => {
     const nBack = this.state.nBack
-    const spaceCollection = [...this.state.gameSpaceTrialHistory].pop()
-    const soundCollection = [...this.state.gameSoundTrialHistory].pop()
+    const spaceCollection = new GameObjectCollection(
+      this.state.currentGameSpaces
+    )
+    const soundCollection = new GameObjectCollection(
+      this.state.currentGameSounds
+    )
 
     const possibleVisualMatches = spaceCollection.possibleMatches(nBack)
     const possibleAudioMatches = soundCollection.possibleMatches(nBack)
 
-    const visualScore = Math.floor(
-      (spaceCollection.matches(nBack) / possibleVisualMatches) * 100
-    )
-    const audioScore = Math.floor(
-      (soundCollection.matches(nBack) / possibleAudioMatches) * 100
-    )
+    const wrongVisualMatches = spaceCollection.falseMatches(nBack)
+    const wrongAudioMatches = soundCollection.falseMatches(nBack)
+
+    const visualScore =
+      Math.floor(
+        (spaceCollection.matches(nBack) / possibleVisualMatches) * 100
+      ) -
+        wrongVisualMatches * 5 || 0
+    const audioScore =
+      Math.floor(
+        (soundCollection.matches(nBack) / possibleAudioMatches) * 100
+      ) -
+        wrongAudioMatches * 5 || 0
 
     const missedVisualMatches = spaceCollection.missedMatches(nBack)
     const missedAudioMatches = soundCollection.missedMatches(nBack)
+
+    this.addSessionScore(nBack, visualScore, audioScore)
 
     this.setState({
       currentVisualScore: visualScore > 0 ? `${visualScore}%` : 0,
       currentAudioScore: audioScore > 0 ? `${audioScore}%` : 0,
       currentMissedVisualMatches: missedVisualMatches,
       currentMissedAudioMatches: missedAudioMatches,
+      currentWrongVisualMatches: wrongVisualMatches,
+      currentWrongAudioMatches: wrongAudioMatches,
     })
 
     if (this.state.options.autoUpdateNBack) {
@@ -296,30 +333,22 @@ class App extends Component {
    */
   completeGameTrial() {
     setTimeout(() => {
-      console.log("Trial complete")
-      const currentGameSpaces = this.state.currentGameSpaces
-      const currentGameSounds = this.state.currentGameSounds
-      const gameSpaceTrialHistory = this.state.gameSpaceTrialHistory
-      const gameSoundTrialHistory = this.state.gameSoundTrialHistory
       this.setState(
         {
           active: false,
-          gameSpaceTrialHistory: [
-            ...gameSpaceTrialHistory,
-            new GameSpaceCollection(currentGameSpaces),
-          ],
-          gameSoundTrialHistory: [
-            ...gameSoundTrialHistory,
-            new GameSoundCollection(currentGameSounds),
-          ],
         },
         () => {
+          console.log("Trial complete")
           this.calculateCurrentScores()
           this.saveLevel()
           this.saveTrials()
           this.saveNBack()
-          if (this.state.options.saveHistory) {
-            this.saveHistory()
+          if (this.state.level === 20) {
+            this.openSessionStats()
+            this.resetGame()
+            if (this.state.options.saveHistory) {
+              this.saveHistory()
+            }
           }
         }
       )
@@ -358,8 +387,30 @@ class App extends Component {
     })
   }
 
+  /**
+   * Calculate average audio score for all session trials
+   * Calculate average visual score for all session trials
+   * Calculate max Nback level for all session trials
+   * @returns {Object} session states
+   */
   calculateSessionStats = () => {
-    // calculate average visual and audio scores
+    const audioScores = this.state.sessionScores.map((obj) => obj.audioScore)
+    const visualScores = this.state.sessionScores.map((obj) => obj.visualScore)
+    const nBackLevels = this.state.sessionScores.map((obj) => obj.nBack)
+
+    const audioAverage =
+      audioScores.reduce((acc, curr) => acc + curr, 0) / audioScores.length || 0
+    const visualAverage =
+      visualScores.reduce((acc, curr) => acc + curr, 0) / visualScores.length ||
+      0
+    const averageNBack =
+      nBackLevels.reduce((acc, curr) => acc + curr, 0) / nBackLevels.length || 2
+
+    return {
+      averageNBack,
+      visualAverage,
+      audioAverage,
+    }
   }
 
   render() {
@@ -368,20 +419,19 @@ class App extends Component {
         <SessionStatsModal
           closeSessionStats={this.closeSessionStats}
           open={this.state.showSessionStats}
+          calculateSessionStats={this.calculateSessionStats}
         />
-        <span>
-          <img src="logo.png" alt="logo"></img>
-          <Header
-            style={{
-              marginTop: "35px",
-              display: "inline-block",
-            }}
-            as="h1"
-          >
-            Dual N-Back
-          </Header>
-        </span>
-        <Grid relaxed>
+        <Header
+          style={{
+            marginLeft: "18px",
+            marginTop: "30px",
+            display: "inline-block",
+          }}
+          as="h1"
+        >
+          Dual N-Back
+        </Header>
+        <Grid relaxed centered style={{ minWidth: "800px" }}>
           <Grid.Column
             width={3}
             textAlign="left"
@@ -405,13 +455,25 @@ class App extends Component {
               </span>
             </p>
             <p>
-              Missed Visual Matches:{" "}
+              Wrong Visual:{" "}
+              <span style={{ fontWeight: "bold" }}>
+                {this.state.currentWrongVisualMatches}
+              </span>
+            </p>
+            <p>
+              Missed Visual:{" "}
               <span style={{ fontWeight: "bold" }}>
                 {this.state.currentMissedVisualMatches}
               </span>
             </p>
             <p>
-              Missed Audio Matches:{" "}
+              Wrong Audio:{" "}
+              <span style={{ fontWeight: "bold" }}>
+                {this.state.currentWrongAudioMatches}
+              </span>
+            </p>
+            <p>
+              Missed Audio:{" "}
               <span style={{ fontWeight: "bold" }}>
                 {this.state.currentMissedAudioMatches}
               </span>
@@ -422,15 +484,17 @@ class App extends Component {
               <a
                 style={{ textDecoration: "underline" }}
                 target="_blank"
+                rel="noreferrer"
                 href="https://en.wikipedia.org/wiki/N-back"
               >
-                What Is Dual N-Back?
+                What Is Dual N-Back
               </a>
+              <Icon name="question circle" />
             </p>
           </Grid.Column>
-          <Grid.Column width={9}>
-            <Grid id="grid" columns="3" celled style={{ borderRadius: "3px" }}>
-              <Grid.Row style={{ height: "175px" }}>
+          <Grid.Column width={8}>
+            <Grid columns="3" celled style={{ borderRadius: "3px" }}>
+              <Grid.Row style={{ height: "160px" }}>
                 <Grid.Column>
                   <div
                     style={{ height: "100%" }}
@@ -453,7 +517,7 @@ class App extends Component {
                   ></div>
                 </Grid.Column>
               </Grid.Row>
-              <Grid.Row style={{ height: "175px" }}>
+              <Grid.Row style={{ height: "160px" }}>
                 <Grid.Column>
                   <div
                     style={{ height: "100%" }}
@@ -476,7 +540,7 @@ class App extends Component {
                   ></div>
                 </Grid.Column>
               </Grid.Row>
-              <Grid.Row style={{ height: "175px" }}>
+              <Grid.Row style={{ height: "160px" }}>
                 <Grid.Column>
                   <div
                     style={{ height: "100%" }}
@@ -504,7 +568,10 @@ class App extends Component {
               <Grid.Column>
                 <Button
                   textAlign="center"
-                  onClick={this.assertAudioMatch}
+                  onClick={(e) => {
+                    this.assertAudioMatch()
+                    e.target.blur()
+                  }}
                   fluid
                   size="big"
                 >
@@ -514,9 +581,10 @@ class App extends Component {
               <Grid.Column>
                 <Button
                   textAlign="center"
-                  onClick={() => {
+                  onClick={(e) => {
                     this.assertAudioMatch()
                     this.assertVisualMatch()
+                    e.target.blur()
                   }}
                   fluid
                   size="big"
@@ -527,7 +595,10 @@ class App extends Component {
               <Grid.Column>
                 <Button
                   textAlign="center"
-                  onClick={this.assertVisualMatch}
+                  onClick={(e) => {
+                    this.assertVisualMatch()
+                    e.target.blur()
+                  }}
                   fluid
                   size="big"
                 >
@@ -545,6 +616,7 @@ class App extends Component {
           </Grid.Column>
           <Grid.Column
             width={4}
+            mobile={4}
             style={{
               marginTop: "27px",
               backgroundColor: "#E5E5E5",
@@ -570,17 +642,9 @@ class App extends Component {
             <Divider />
             <p>Options</p>
             <Checkbox
-              label="Dual n-back"
-              style={{ marginRight: "3px" }}
-              checked
-              radio
-            />
-            <Checkbox label="N-back (no sound)" radio />
-            <Checkbox
               key={this.state.options}
               label="Auto-update n-back"
               toggle
-              style={{ marginTop: "15px" }}
               checked={this.state.options.autoUpdateNBack}
               onChange={(e) => {
                 const { options } = this.state

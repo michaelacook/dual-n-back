@@ -1,4 +1,4 @@
-export default [
+const nBackDropDownOptions = [
   {
     key: 0,
     text: "1 Back",
@@ -60,3 +60,5 @@ export default [
     value: 12,
   },
 ]
+
+export default nBackDropDownOptions
