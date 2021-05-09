@@ -87,14 +87,23 @@ class App extends Component {
    * Save session scores and current date to a cookie
    */
   saveHistory = () => {
-    Cookies.set(
-      "sessionHistory",
-      JSON.stringify({
-        scores: this.calculateSessionStats(),
-        date: new Date(),
-      }),
-      { expires: 365 }
-    )
+    const sessionHistory = Cookies.get("sessionHistory")
+      ? [
+          ...JSON.parse(Cookies.get("sessionHistory")),
+          {
+            scores: this.calculateSessionStats(),
+            date: new Date(),
+          },
+        ]
+      : [
+          {
+            scores: this.calculateSessionStats(),
+            date: new Date(),
+          },
+        ]
+    Cookies.set("sessionHistory", JSON.stringify(sessionHistory), {
+      expires: 365,
+    })
   }
 
   incrementNBack = () => {
