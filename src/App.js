@@ -89,10 +89,10 @@ class App extends Component {
   saveHistory = () => {
     Cookies.set(
       "sessionHistory",
-      {
+      JSON.stringify({
         scores: this.calculateSessionStats(),
         date: new Date(),
-      },
+      }),
       { expires: 365 }
     )
   }
