@@ -440,7 +440,7 @@ class App extends Component {
         >
           Dual N-Back
         </Header>
-        <Grid relaxed centered style={{ minWidth: "800px" }}>
+        <Grid relaxed centered style={{ minWidth: "1169px" }}>
           <Grid.Column
             width={3}
             textAlign="left"
