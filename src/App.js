@@ -23,7 +23,7 @@ class App extends Component {
     super(props)
     this.state = {
       showControlsDimmer: true,
-      showSessionStats: true,
+      showSessionStats: false,
       active: false,
       nBack: Number(Cookies.get("nBack")) || 2,
       iteration: -1,
